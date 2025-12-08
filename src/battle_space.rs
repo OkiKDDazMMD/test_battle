@@ -1,10 +1,12 @@
+use rayon::prelude::*;
+
 // ----------------------------------------------------------------------
 // 1. データ構造 (変更なし)
 // ----------------------------------------------------------------------
 #[derive(Debug, Clone, Copy)]
 pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
+    x: f32,
+    y: f32,
 }
 
 impl Vec2 {
@@ -12,9 +14,23 @@ impl Vec2 {
         Self { x, y }
     }
 
+    pub fn move_point(&mut self, x: f32, y: f32) {
+        self.x = self.x+x;
+        self.y = self.y+y;
+    }
+
+    // getter メソッド
+    pub fn x(&self) -> f32 {
+        self.x
+    }
+
+    pub fn y(&self) -> f32 {
+        self.y
+    }    
+
     // 2点間のユークリッド距離を計算するメソッド
     pub fn distance2powi(&self, other: &Vec2) -> f32 {
-        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2))
+        (self.x - other.x).powi(2) + (self.y - other.y).powi(2)
     }
 }
 
@@ -38,6 +54,12 @@ impl BattleSpace {
         }
     }
 
+    pub fn move_point(&mut self, x: f32, y: f32, index: usize) {
+        if index < self.points.len() {
+            self.points[index].move_point(x, y);
+        }
+    }
+
     /// 距離行列の一次元配列内でのインデックスを計算するヘルパー関数
     fn index(&self, i: usize, j: usize, count: usize) -> usize {
         i * count + j
@@ -45,6 +67,11 @@ impl BattleSpace {
 
     /// 距離行列を計算し、struct内部に保存する
     pub fn calculate_distance_matrix(&mut self) {
+         // --- 追加：配列を並列に初期化 ---
+        self.distance_matrix
+            .par_iter_mut()
+            .for_each(|element| *element = -1.0);
+
         let point_count = self.points.len();
 
         for i in 0..point_count {
@@ -53,10 +80,14 @@ impl BattleSpace {
 
                 if i == j {
                     self.distance_matrix[index] = 0.0;
-                } else {
+                } else if self.distance_matrix[index] < 0.0 {
                     // pointsフィールドのデータを用いて距離を計算
                     let dist = self.points[i].distance2powi(&self.points[j]);
                     self.distance_matrix[index] = dist;
+                    let reverse_index = self.index(j, i, point_count);
+                    if self.distance_matrix[reverse_index] < 0.0 {
+                        self.distance_matrix[reverse_index] = dist;
+                    }
                 }
             }
         }

@@ -15,7 +15,7 @@ fn main() {
     let target_index = 0; // ターゲットとなる配列番号
 
     // 2. BattleSpaceの生成と処理の実行
-    let mut battle_space = BattleSpace::new(initial_points);
+    let mut battle_space = BattleSpace::new(initial_points.clone());
     
     // 距離行列の計算を実行 (struct内部で状態が更新される)
     battle_space.calculate_distance_matrix();
@@ -29,16 +29,44 @@ fn main() {
             println!("--- 🎯 最適なターゲット探索結果 ---");
             println!("🏠 ターゲット点 (点 {})", target_index);
             println!("  座標: ({}, {})", 
-                battle_space.points[target_index].x, battle_space.points[target_index].y);
+                battle_space.points[target_index].x(), battle_space.points[target_index].y());
             println!("---");
             println!("🔍 最も近い点 (点 {})", nearest_idx);
             println!("  座標: ({}, {})", 
-                battle_space.points[nearest_idx].x, battle_space.points[nearest_idx].y);
+                battle_space.points[nearest_idx].x(), battle_space.points[nearest_idx].y());
             println!("  距離: {:.4}", min_dist);
         },
         None => {
             println!("⚠️ 比較対象の点がありませんでした (またはターゲットインデックスが不正です)。");
         },
     }
+
+    battle_space.move_point(0.1, -0.1, 0);
+    battle_space.move_point(-0.6, -1.5, 1);
+    battle_space.move_point(-0.1, -0.1, 2);
+    battle_space.move_point(0.3, 0.2, 3);
+  
+    battle_space.calculate_distance_matrix();
+
+    // 最近傍点の探索
+    let result = battle_space.find_nearest_point(target_index);
+
+    // 3. 結果の出力
+    match result {
+        Some((nearest_idx, min_dist)) => {
+            println!("--- 🎯 最適なターゲット探索結果 ---");
+            println!("🏠 ターゲット点 (点 {})", target_index);
+            println!("  座標: ({}, {})", 
+                battle_space.points[target_index].x(), battle_space.points[target_index].y());
+            println!("---");
+            println!("🔍 最も近い点 (点 {})", nearest_idx);
+            println!("  座標: ({}, {})", 
+                battle_space.points[nearest_idx].x(), battle_space.points[nearest_idx].y());
+            println!("  距離: {:.4}", min_dist);
+        },
+        None => {
+            println!("⚠️ 比較対象の点がありませんでした (またはターゲットインデックスが不正です)。");
+        },
+    }    
 
 }
